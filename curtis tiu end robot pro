@@ -1,0 +1,566 @@
+#include "sumovore.h"
+#include "motor_control.h"
+#include <delays.h>
+#include <timers.h>
+
+void spin_left(void);  //basic turning function
+void turn_left(void);  //basic turning function
+void straight_fwd(void);  //basic turning function
+void turn_right(void);  //basic turning function
+void spin_right(void);  //basic turning function
+void slightly_left(void);
+void slightly_right(void);
+
+//our functions
+void dead_end_turn(void);
+void turn_around(void);
+void check_and_turnRight1(void);
+void check_and_turnLeft1(void);
+void check_and_turnRight2(void);
+void check_and_turnLeft2(void);
+void check_and_turnRight3(void);
+void check_and_turnLeft3(void);
+void check_and_break(void);
+void corner_turn_left(void);
+void corner_turn_right(void);
+void V_turn_left(void);
+void V_turn_right(void);
+void Vsub_turn_left(void);
+void Vsub_turn_right(void);
+void V_turn_left1(void);
+void V_turn_right1(void);
+
+
+
+
+
+void motor_control(void)
+{
+
+     
+     //basic adjust functions
+     if ( (SeeLine.B) == 0b00100u) straight_fwd();//ok
+     else if ((SeeLine.B) == 0b10000u) spin_left();//turn on oval
+     else if ((SeeLine.B) == 0b01000u) turn_left();//on oval
+     else if ((SeeLine.B) == 0b00010u) turn_right();//on oval
+     else if ((SeeLine.B) == 0b00001u) spin_right();//on oval
+     else if ((SeeLine.B) == 0b01100u) slightly_left();
+     else if ((SeeLine.B) == 0b00110u) slightly_right();
+    
+    
+//working functions
+//----------------------------------------------------------------------------------------------------------
+//problem:1. V turns doesn't work 100%
+//        2. need different functions for each case, 00101, and 01101 are different, the second
+//           should be moving left in case there two lines that close each other.
+//        3.need functions for oval that will not affect by thses turning functions.
+//-----------------------------------------------------------------------------------------------------------
+
+     else if ((SeeLine.B) == 0b01111u) check_and_turnRight1();//90 degree corner - call turn function inside
+     else if ((SeeLine.B) == 0b00111u) check_and_turnRight2();
+     else if ((SeeLine.B) == 0b00011u) check_and_turnRight3();
+     else if ((SeeLine.B) == 0b11110u) check_and_turnLeft1();//90 degree corner - call turn function inside
+     else if ((SeeLine.B) == 0b11100u) check_and_turnLeft2();
+     else if ((SeeLine.B) == 0b11000u) check_and_turnLeft3();
+                   
+     else if ((SeeLine.B) == 0b11111u) check_and_break();  
+     else if ((SeeLine.B) == 0b00000u) dead_end_turn();  // if see all black
+     
+     else if ((SeeLine.B) == 0b10100u) V_turn_left1();
+     else if ((SeeLine.B) == 0b11010u) V_turn_left();
+     else if ((SeeLine.B) == 0b10110u) V_turn_left();
+     else if ((SeeLine.B) == 0b10010u) V_turn_left();
+    
+     
+     else if ((SeeLine.B) == 0b00101u) V_turn_right1();
+     else if ((SeeLine.B) == 0b01011u) V_turn_right();
+     else if ((SeeLine.B) == 0b01101u) V_turn_right();
+     else if ((SeeLine.B) == 0b01001u) V_turn_right();
+     
+     
+//--------------------------------special cases---------------------------------------------------------------
+     //else if ((SeeLine.B) == 0b01110u)
+     
+}
+
+
+//-----------------------------------------------------------------------------------------------------
+//These functions are basic functions for adjustment while is moving
+//-----------------------------------------------------------------------------------------------------
+void spin_left(void)
+{
+  set_motor_speed(left, rev_medium, 0); 
+  set_motor_speed(right, fast, 0); 
+ 
+}
+
+void turn_left(void)
+{
+  set_motor_speed(left, slow, 0); 
+  set_motor_speed(right, medium, 0);
+  
+}
+void straight_fwd(void)
+{
+
+  set_motor_speed(left,medium, 0); 
+  set_motor_speed(right,medium, 0);
+ 
+}
+void spin_right(void)
+{
+  set_motor_speed(left, fast, 0); 
+  set_motor_speed(right, rev_medium, 0);   
+}
+void turn_right(void)
+{
+  set_motor_speed(left, fast, 0); 
+  set_motor_speed(right, slow, 0); 
+  
+}
+
+void slightly_left(void)
+{
+  set_motor_speed(left, stop, 0); 
+  set_motor_speed(right, medium, 0); 
+}
+  
+void slightly_right(void)
+{
+  set_motor_speed(left, medium, 0); 
+  set_motor_speed(right, stop, 0); 
+}
+
+
+//-----------------------------------------------------------------------------------
+//The following function is to go through a gap, or turn after go 5~6cm
+//after a deadend.
+//-----------------------------------------------------------------------------------
+void dead_end_turn(void)
+{
+  
+        OpenTimer0(TIMER_INT_OFF & T0_SOURCE_INT & T0_16BIT & T0_PS_1_128);
+  	    INTCONbits.TMR0IF = 0;
+
+  	    WriteTimer0(30911); //0.25s
+  	    while(((SeeLine.B) == 0b00000u) && (!INTCONbits.TMR0IF)) 
+  	    {
+	  	    set_motor_speed(left, slow, 0); 
+            set_motor_speed(right,slow, 0);
+	  	    check_sensors();
+	  	} 
+    	
+        if  (INTCONbits.TMR0IF)
+    	{
+    		turn_around();
+    		straight_fwd();
+    		Delay10KTCYx(200);
+    		CloseTimer0();
+    	}	
+      	
+}
+
+void turn_around(void)
+{
+   set_motor_speed(left,rev_medium,0);
+   set_motor_speed(right,medium,0); //need to test how long it takes 
+                                       //to turn around? and goes back for 3~5 cm to 
+                                       //get back
+   Delay10KTCYx(160);  //after turned around and then go straight back to line
+   Delay10KTCYx(160);
+   Delay10KTCYx(160);
+   Delay10KTCYx(100);
+   //Delay10KTCYx(40);  //battery adjustment
+  
+} 
+
+
+
+//----------------------------------------------------------------------------------
+//The following functions are for left/right turn at T, L, cross
+//It will go for 2cm to check the further condition and choose to go 
+//straight or turn at that point.
+//-----------------------------------------------------------------------------------
+
+void check_and_turnRight1(void)
+{
+//----------------------------------------------solution 1--------------------------
+	OpenTimer0(TIMER_INT_OFF & T0_SOURCE_INT & T0_16BIT & T0_PS_1_64);
+	INTCONbits.TMR0IF = 0;
+	WriteTimer0(50000); //0.0443s
+	while((!INTCONbits.TMR0IF) && (SeeLine.B) != 0b00000u)
+	{
+		straight_fwd();
+		check_sensors();
+	}	
+   // if  (INTCONbits.TMR0IF && ((SeeLine.B) == 0b00000u))
+   // 	{
+	    	while((SeeLine.B) == 0b00000u)
+	    	{
+	        corner_turn_right(); 
+	        check_sensors();
+            }  
+
+    		CloseTimer0();
+    //	}
+}
+void check_and_turnRight2(void)
+{
+	OpenTimer0(TIMER_INT_OFF & T0_SOURCE_INT & T0_16BIT & T0_PS_1_64);
+	INTCONbits.TMR0IF = 0;
+	set_motor_speed(left, medium, 0); 	
+	set_motor_speed(right,medium, 0);
+	WriteTimer0(50000); //0.0443s
+	while((!INTCONbits.TMR0IF) && (SeeLine.B) != 0b00000u) 
+	{
+		set_motor_speed(left, medium, 0); 	
+	    set_motor_speed(right,medium, 0);
+		check_sensors();
+	}	
+   // if  (INTCONbits.TMR0IF && ((SeeLine.B) == 0b00000u))
+   // 	{
+	    	while((SeeLine.B) == 0b00000u)
+	    	{
+	        corner_turn_right(); 
+	        check_sensors();
+            }  
+
+    		CloseTimer0();
+  //  	}
+}
+
+void check_and_turnRight3(void)
+{
+	OpenTimer0(TIMER_INT_OFF & T0_SOURCE_INT & T0_16BIT & T0_PS_1_64);
+	INTCONbits.TMR0IF = 0;
+	WriteTimer0(50000); //0.0443s
+	while((!INTCONbits.TMR0IF) && (SeeLine.B) != 0b00000u) 
+	{
+		set_motor_speed(left, medium, 0); 	
+	    set_motor_speed(right,medium, 0);
+		check_sensors();
+	}	
+  //  if  (INTCONbits.TMR0IF && ((SeeLine.B) == 0b00000u))
+  //  	{
+	    	while((SeeLine.B) == 0b00000u)
+	    	{
+	        corner_turn_right(); 
+	        check_sensors();
+            }  
+
+    		CloseTimer0();
+  //  	}
+}
+    	
+void corner_turn_right(void)
+{
+		    set_motor_speed(left, medium, 0); 
+            set_motor_speed(right, rev_medium, 2); 
+}            
+
+
+void check_and_turnLeft1(void)
+{
+//----------------------------solution 1---------------------------------
+    OpenTimer0(TIMER_INT_OFF & T0_SOURCE_INT & T0_16BIT & T0_PS_1_64);
+	INTCONbits.TMR0IF = 0;
+	WriteTimer0(50000); //0.0443s
+	while((!INTCONbits.TMR0IF) && (SeeLine.B) != 0b00000u) 
+	{
+		straight_fwd();
+		check_sensors();
+	}	
+    //if  (INTCONbits.TMR0IF && ((SeeLine.B) == 0b00000u))
+    //	{
+	          while((SeeLine.B) == 0b00000u)
+		       {
+		        corner_turn_left();
+		        check_sensors();
+               } 
+     
+                CloseTimer0();
+                 
+    //	}
+}
+
+void check_and_turnLeft2(void)
+{
+    OpenTimer0(TIMER_INT_OFF & T0_SOURCE_INT & T0_16BIT & T0_PS_1_64);
+	INTCONbits.TMR0IF = 0;
+	WriteTimer0(50000); //0.0443s
+	while((!INTCONbits.TMR0IF) && (SeeLine.B) != 0b00000u) 
+	{
+		set_motor_speed(left, medium, 0); 
+	    set_motor_speed(right,medium, 0);
+		check_sensors();
+	}	
+  //  if  (INTCONbits.TMR0IF && ((SeeLine.B) == 0b00000u))
+  //  	{
+	          while((SeeLine.B) == 0b00000u)
+		       {
+		        corner_turn_left();
+		        check_sensors();
+               } 
+     
+                CloseTimer0();
+                 
+  //  	}
+}    
+
+void check_and_turnLeft3(void)
+{
+    OpenTimer0(TIMER_INT_OFF & T0_SOURCE_INT & T0_16BIT & T0_PS_1_64);
+	INTCONbits.TMR0IF = 0;
+	WriteTimer0(50000); //0.0443s
+	while((!INTCONbits.TMR0IF) && (SeeLine.B) != 0b00000u) 
+	{
+		set_motor_speed(left, medium, 0); 
+    	set_motor_speed(right,medium, 0);
+		check_sensors();
+	}	
+    //if  (INTCONbits.TMR0IF && ((SeeLine.B) == 0b00000u))
+    //	{
+	          while((SeeLine.B) == 0b00000u)
+		       {
+		        corner_turn_left();
+		        check_sensors();
+               } 
+     
+                CloseTimer0();
+                 
+    //	}
+}  	
+
+void corner_turn_left(void)
+{
+		    set_motor_speed(left, rev_medium, 2); 
+            set_motor_speed(right, medium, 0); 
+}            
+
+	
+
+void check_and_break(void)
+{
+   Delay10KTCYx(80);
+   motors_brake_all();
+  
+}
+
+
+
+//-----------------------------------------------------------------------------------------
+//The following functions are for V turns and sub-functions
+//problem: have to write if else so that if two lines close to each others, the robot won't confuse about it.
+//------------------------------------------------------------------------------------------
+
+void V_turn_left(void)
+{
+	OpenTimer0(TIMER_INT_OFF & T0_SOURCE_INT & T0_16BIT & T0_PS_1_64);
+	INTCONbits.TMR0IF = 0;
+	//set_motor_speed(left, fast, 0); 
+	//set_motor_speed(right,fast, 0);
+	WriteTimer0(40536); //0.2s
+	while((!INTCONbits.TMR0IF) && (SeeLine.B) != 0b00000u) 
+	{
+		set_motor_speed(left, fast, 0); 
+        set_motor_speed(right, slow, 0);
+		while(((SeeLine.B) == 0b01100u) || ((SeeLine.B) == 0b00110u) || ((SeeLine.B) == 0b01110u) || ((SeeLine.B) == 0b00100u) || ((SeeLine.B) == 0b00011u) || ((SeeLine.B) == 0b11000u))
+		{
+			set_motor_speed(left, fast, 0); 
+            set_motor_speed(right, slow, 0);
+			check_sensors(); 
+		}
+		check_sensors(); 
+	}	
+		
+		// if  ((SeeLine.B) == 0b00000u)
+      	//{
+	      while((SeeLine.B) == 0b00000u)
+	    	{
+	            Vsub_turn_left();
+	            check_sensors();
+  
+            }  
+            
+           
+			CloseTimer0();
+	   // }	
+
+	//}	
+		 
+    //while((!INTCONbits.TMR0IF) && ((SeeLine.B) == 0b00000u)) check_sensors();  
+    //if  ((SeeLine.B) == 0b00000u)
+  	//{
+	 //     while((SeeLine.B) == 0b00000u)
+	  //  	{
+	  //          Vsub_turn_left();
+	 //           check_sensors();
+  
+     //       }  
+            
+     //       Vsub_turn_right();
+	//		CloseTimer0();
+	//}
+			  	
+   	
+
+
+
+
+}    	
+	
+void V_turn_right(void)
+{
+	OpenTimer0(TIMER_INT_OFF & T0_SOURCE_INT & T0_16BIT & T0_PS_1_64);
+	INTCONbits.TMR0IF = 0;
+	//set_motor_speed(left, fast, 0); 
+	//set_motor_speed(right,fast, 0);
+	WriteTimer0(40536); //0.2s  35536
+	//while((!INTCONbits.TMR0IF)) straight_fwd(); check_sensors(); 
+	while((!INTCONbits.TMR0IF) && (SeeLine.B) != 0b00000u)
+	{
+		
+        set_motor_speed(left, slow, 0); 
+        set_motor_speed(right, fast, 0); 
+		while(((SeeLine.B) == 0b01100u) || ((SeeLine.B) == 0b00110u) || ((SeeLine.B) == 0b01110u) || ((SeeLine.B) == 0b00100u) || ((SeeLine.B) == 0b00011u) || ((SeeLine.B) == 0b11000u))
+		{
+			set_motor_speed(left, slow, 0); 
+            set_motor_speed(right, fast, 0);
+			check_sensors(); 
+		}
+		check_sensors(); 
+	}		
+
+	
+//	while((!INTCONbits.TMR0IF) && ((SeeLine.B) == 0b00000u)) check_sensors(); 
+    //if  ((SeeLine.B) == 0b00000u)
+      // {
+	      while((SeeLine.B) == 0b00000u)
+	    	{
+	            Vsub_turn_right();
+	            check_sensors();
+            } 
+                 
+             
+    		CloseTimer0();
+       //}
+         
+    	 
+
+    
+}  
+
+
+
+
+
+
+void V_turn_left1(void)
+{
+	OpenTimer0(TIMER_INT_OFF & T0_SOURCE_INT & T0_16BIT & T0_PS_1_64);
+	INTCONbits.TMR0IF = 0;
+	//set_motor_speed(left, fast, 0); 
+	//set_motor_speed(right,fast, 0);
+	WriteTimer0(40536); //0.2s
+	while((!INTCONbits.TMR0IF) && (SeeLine.B) != 0b00000u) 
+	{
+		set_motor_speed(left, medium, 0); 
+        set_motor_speed(right, medium, 0);
+		while(((SeeLine.B) == 0b01100u) || ((SeeLine.B) == 0b00110u) || ((SeeLine.B) == 0b01110u) || ((SeeLine.B) == 0b00100u) || ((SeeLine.B) == 0b00011u) || ((SeeLine.B) == 0b11000u))
+		{
+			set_motor_speed(left, medium, 0); 
+            set_motor_speed(right, medium, 0);
+			check_sensors(); 
+		}
+		check_sensors(); 
+	}	
+		
+		// if  ((SeeLine.B) == 0b00000u)
+      	//{
+	      while((SeeLine.B) == 0b00000u)
+	    	{
+	            Vsub_turn_left();
+	            check_sensors();
+  
+            }  
+            
+           
+			CloseTimer0();
+	   // }	
+
+	//}	
+		 
+    //while((!INTCONbits.TMR0IF) && ((SeeLine.B) == 0b00000u)) check_sensors();  
+    //if  ((SeeLine.B) == 0b00000u)
+  	//{
+	 //     while((SeeLine.B) == 0b00000u)
+	  //  	{
+	  //          Vsub_turn_left();
+	 //           check_sensors();
+  
+     //       }  
+            
+     //       Vsub_turn_right();
+	//		CloseTimer0();
+	//}
+			  	
+   	
+
+
+
+
+}    	
+	
+void V_turn_right1(void)
+{
+	OpenTimer0(TIMER_INT_OFF & T0_SOURCE_INT & T0_16BIT & T0_PS_1_64);
+	INTCONbits.TMR0IF = 0;
+	//set_motor_speed(left, fast, 0); 
+	//set_motor_speed(right,fast, 0);
+	WriteTimer0(40536); //0.2s  35536
+	//while((!INTCONbits.TMR0IF)) straight_fwd(); check_sensors(); 
+	while((!INTCONbits.TMR0IF) && (SeeLine.B) != 0b00000u)
+	{
+		
+        set_motor_speed(left, medium, 0); 
+        set_motor_speed(right, medium, 0); 
+		while(((SeeLine.B) == 0b01100u) || ((SeeLine.B) == 0b00110u) || ((SeeLine.B) == 0b01110u) || ((SeeLine.B) == 0b00100u) || ((SeeLine.B) == 0b00011u) || ((SeeLine.B) == 0b11000u))
+		{
+			set_motor_speed(left, medium, 0); 
+            set_motor_speed(right, medium, 0);
+			check_sensors(); 
+		}
+		check_sensors(); 
+	}		
+
+	
+//	while((!INTCONbits.TMR0IF) && ((SeeLine.B) == 0b00000u)) check_sensors(); 
+    //if  ((SeeLine.B) == 0b00000u)
+      // {
+	      while((SeeLine.B) == 0b00000u)
+	    	{
+	            Vsub_turn_right();
+	            check_sensors();
+            } 
+                 
+             
+    		CloseTimer0();
+       //}
+         
+    	 
+
+    
+}  
+  
+  
+void Vsub_turn_left(void)
+{
+	set_motor_speed(left, rev_medium, 0); 
+    set_motor_speed(right, medium, 0); 
+}
+    
+void Vsub_turn_right(void)
+{
+	set_motor_speed(left, medium, 0); 
+    set_motor_speed(right, rev_medium, 0); 
+}
