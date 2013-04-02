@@ -1,4 +1,4 @@
 RoboCop
 =======
 
-Scott, Andrew and Liam made an excellent robot
+Scott, Andrew and Liam made an excellent robot that fights crime and stuff...
