@@ -1,0 +1,168 @@
+#include "sumovore.h" 
+#include "motor_control.h" 
+#include <timers.h> 
+#include <delays.h> 
+ 
+void spin_left(void); 
+void turn_left(void); 
+void straight_fwd(void); 
+void turn_right(void); 
+void spin_right(void); 
+void turn180 (void);
+void onetwenty_degree_left_turn (void); 
+void thirty_degree_left_turn(void);
+void thirty_degree_right_turn(void);
+void onetwenty_degree_right_turn (void);
+void big_gap(void);
+void turn_slightright(void);
+void turn_harshleft(void);
+void turn_harshright(void); 
+void turn_slightleft(void);
+void turn_around(void);
+void straight_going(void);
+
+void motor_control(void)
+{  
+      
+  if  (((SeeLine.B) == 0b00100u) || ((SeeLine.B ) == 0b01110u) || ((SeeLine.B) == 0b11111u)) straight_fwd();
+ 	else if (((SeeLine.B ) == 0b00111u) || ((SeeLine.B ) == 0b00101u) || ((SeeLine.B ) == 0b01111u) || ((SeeLine.B ) == 0b00011u) || ((SeeLine.B ) == 0b00010u) || ((SeeLine.B ) == 0b00110u)) spin_left();
+	else if (((SeeLine.B ) == 0b11100u) || ((SeeLine.B ) == 0b10100u) || ((SeeLine.B ) == 0b11000u) || ((SeeLine.B ) == 0b01000u) || ((SeeLine.B ) == 0b11110u) || ((SeeLine.B ) == 0b01100u)) spin_right();
+	
+	else if  ((SeeLine.B ) == 0b00000u) turn_around();
+
+
+} 
+   
+void turn_around (void) //This function turns the robot around
+{
+ INTCONbits.TMR0IF = 0;
+OpenTimer0(TIMER_INT_OFF & T0_16BIT & T0_SOURCE_INT & T0_PS_1_128);
+WriteTimer0(0);
+if ((ReadTimer0() < 30000 ) && ((SeeLine.B) == 0b00000u) )
+{
+check_sensors();
+straight_fwd();
+
+
+}
+if (((SeeLine.B) == 0b00000u) && (ReadTimer0() >= 30000 )) 
+{
+check_sensors();
+if ((SeeLine.B) == 0b00100u)
+{
+straight_fwd();
+}
+else if ((SeeLine.B ) == 0b11100u)
+{
+check_sensors();
+spin_right();
+}
+else if ((SeeLine.B ) == 0b00111u)
+{
+check_sensors();
+spin_left();
+}
+else if ( (SeeLine.B) == 0b00000u)
+{
+set_motor_speed(left, fast, 10); 
+set_motor_speed(right, rev_fast, 0);
+   Delay10KTCYx(160);
+   Delay10KTCYx(160);
+	Delay10KTCYx(80);
+straight_fwd();
+CloseTimer0();
+}
+}
+}
+
+void straight_going(void)
+{
+OpenTimer0(TIMER_INT_OFF & T0_16BIT & T0_SOURCE_INT & T0_PS_1_256);
+ INTCONbits.TMR0IF = 0;
+WriteTimer0(12000);
+while ((!INTCONbits.TMR0IF) && ((SeeLine.B ) == 0b01110u))
+{
+straight_fwd();
+}
+}
+
+void turn_slightright(void) 
+{ 
+set_motor_speed(left, slow, 10); 
+set_motor_speed(right, medium, 0); 
+} 
+ 
+void turn_harshleft(void)
+{ 
+set_motor_speed(left, fast, 10); 
+set_motor_speed(right, stop, 0); 
+} 
+ 
+void turn_harshright(void) 
+{ 
+set_motor_speed(left, stop, 10); 
+set_motor_speed(right, fast, 0); 
+} 
+ 
+void turn_slightleft(void) 
+{ 
+set_motor_speed(left, medium, 10); 
+set_motor_speed(right, slow, 0); 
+} 
+ 
+void spin_left(void) 
+{ 
+{
+if (((SeeLine.B ) == 0b00000u) || ((SeeLine.B ) == 0b00111u) || ((SeeLine.B ) == 0b01111u) || ((SeeLine.B ) == 0b00101u) || ((SeeLine.B ) == 0b00011u) || ((SeeLine.B ) == 0b00010u) || ((SeeLine.B ) == 0b00110u))
+{
+check_sensors();
+  set_motor_speed(right, rev_fast, 0);  
+  set_motor_speed(left, fast, 0);  
+} 
+}
+}
+ 
+void turn180(void)
+{
+  set_motor_speed(left, rev_fast, 10);  
+  set_motor_speed(right, fast, 0);  
+} 
+ 
+void turn_left(void) 
+{ 
+  set_motor_speed(left, stop, 10);  
+  set_motor_speed(right, fast, 0);  
+} 
+void straight_fwd(void) 
+{ 
+OpenTimer0(TIMER_INT_OFF & T0_16BIT & T0_SOURCE_INT & T0_PS_1_256);
+WriteTimer0(10000);
+if ((!INTCONbits.TMR0IF) || ((SeeLine.B ) == 0b01110u) || ((SeeLine.B ) == 0b01111u) || ((SeeLine.B ) == 0b00100u) || ((SeeLine.B ) == 0b00101u) || ((SeeLine.B ) == 0b10100u) || ((SeeLine.B ) == 0b11111u)   )
+{
+  set_motor_speed(left, fast, 10);  
+  set_motor_speed(right, fast, 0);
+}
+else if ( (INTCONbits.TMR0IF) && ((SeeLine.B) == 0b11111u)) 
+{
+motors_brake_all();
+}
+} 
+void spin_right(void) 
+{ 
+
+{
+if (((SeeLine.B ) == 0b00000u) || ((SeeLine.B ) == 0b11100u) || ((SeeLine.B ) == 0b10100u) || ((SeeLine.B ) == 0b11000u) || ((SeeLine.B ) == 0b01000u) || ((SeeLine.B ) == 0b01100u))
+ {
+check_sensors();
+ set_motor_speed(right, fast, 10);  
+  set_motor_speed(left, rev_medium, 0);
+ } 
+} 
+}
+void turn_right(void) 
+{ 
+  set_motor_speed(left, fast, 10);  
+  set_motor_speed(right, stop, 0); 
+}
+
+
