@@ -35,42 +35,41 @@ void motor_control(void)
    
 void turn_around (void) //This function turns the robot around
 {
- INTCONbits.TMR0IF = 0;
-OpenTimer0(TIMER_INT_OFF & T0_16BIT & T0_SOURCE_INT & T0_PS_1_128);
-WriteTimer0(0);
-if ((ReadTimer0() < 30000 ) && ((SeeLine.B) == 0b00000u) )
-{
-check_sensors();
-straight_fwd();
+	INTCONbits.TMR0IF = 0;
+	OpenTimer0(TIMER_INT_OFF & T0_16BIT & T0_SOURCE_INT & T0_PS_1_128);
+	WriteTimer0(0);
+	if ((ReadTimer0() < 30000 ) && ((SeeLine.B) == 0b00000u) )
+	{
+		check_sensors();
+		straight_fwd();
+	}
 
-
-}
-if (((SeeLine.B) == 0b00000u) && (ReadTimer0() >= 30000 )) 
-{
-check_sensors();
-if ((SeeLine.B) == 0b00100u)
-{
-straight_fwd();
-}
-else if ((SeeLine.B ) == 0b11100u)
-{
-check_sensors();
-spin_right();
-}
-else if ((SeeLine.B ) == 0b00111u)
-{
-check_sensors();
-spin_left();
-}
-else if ( (SeeLine.B) == 0b00000u)
-{
-set_motor_speed(left, fast, 10); 
-set_motor_speed(right, rev_fast, 0);
-   Delay10KTCYx(160);
-   Delay10KTCYx(160);
-	Delay10KTCYx(80);
-straight_fwd();
-CloseTimer0();
+	if (((SeeLine.B) == 0b00000u) && (ReadTimer0() >= 30000 )) 
+	{
+		check_sensors();
+		if ((SeeLine.B) == 0b00100u)
+		{
+			straight_fwd();
+		}
+		else if ((SeeLine.B ) == 0b11100u)
+		{	
+			check_sensors();
+			spin_right();
+		}
+		else if ((SeeLine.B ) == 0b00111u)
+		{
+			check_sensors();
+			spin_left();
+		}
+		else if ( (SeeLine.B) == 0b00000u)
+		{
+			set_motor_speed(left, fast, 10); 
+			set_motor_speed(right, rev_fast, 0);
+			Delay10KTCYx(160);
+			Delay10KTCYx(160);
+			Delay10KTCYx(80);
+			straight_fwd();
+			CloseTimer0();
 }
 }
 }
