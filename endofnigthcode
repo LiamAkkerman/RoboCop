@@ -146,11 +146,18 @@ if (((SeeLine.B ) == 0b01110u) || ((SeeLine.B ) == 0b01111u) || ((SeeLine.B ) ==
  set_motor_speed(left, fast, 10);  
   set_motor_speed(right, fast, 0);
 }
+
+else 
+{
+CloseTimer0(); //break straight if turn detected
+INTCONbits.TMR0IF= 0;
+break;
 }
+
 if ( (INTCONbits.TMR0IF) && ((SeeLine.B) == 0b11111u)) 
 {
 
- motors_brake_all();
+motors_brake_all();
 CloseTimer0();
 }
 }
