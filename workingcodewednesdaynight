@@ -1,0 +1,281 @@
+#include "sumovore.h" 
+#include "motor_control.h" 
+#include <timers.h> 
+#include <delays.h> 
+ 
+void spin_left(void); 
+void turn_left(void); 
+void straight_fwd(void); 
+void turn_right(void); 
+void spin_right(void); 
+void turn_around(void);
+void straight_going(void);
+
+void motor_control(void)
+{  
+      
+  if  (((SeeLine.B) == 0b00100u) || ((SeeLine.B ) == 0b01110u) || ((SeeLine.B) == 0b11111u)) straight_fwd();
+   else if (((SeeLine.B ) == 0b00111u) || ((SeeLine.B ) == 0b01111u) || ((SeeLine.B ) == 0b00011u) || ((SeeLine.B ) == 0b00010u) || ((SeeLine.B ) == 0b00110u)) spin_left();
+	else if (((SeeLine.B ) == 0b11100u) || ((SeeLine.B ) == 0b11000u) || ((SeeLine.B ) == 0b01000u) || ((SeeLine.B ) == 0b11110u) || ((SeeLine.B ) == 0b01100u)) spin_right();
+	else if ((SeeLine.B) == 0b10100u) turn_left();
+	else if ((SeeLine.B) == 0b00101u) turn_right();
+	 if ( (SeeLine.B ) == 0b00000u) turn_around();
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+} 
+   
+void turn_around (void) //This function turns the robot around
+{
+OpenTimer0(TIMER_INT_OFF & T0_16BIT & T0_SOURCE_INT & T0_PS_1_128);
+WriteTimer0(40000);
+INTCONbits.TMR0IF = 0;
+while ((!INTCONbits.TMR0IF ) && ((SeeLine.B) == 0b00000u) )
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+if ((SeeLine.B) == 0b00100u)
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+set_motor_speed(left, medium, 10);  
+  set_motor_speed(right, medium, 0);
+CloseTimer0();
+}
+else if ((SeeLine.B ) == 0b11100u)
+{
+check_sensors();    // from sumovore.c
+        set_leds();    // from sumovore.c
+        set_leds();
+spin_right();
+CloseTimer0();
+}
+else if ((SeeLine.B ) == 0b00111u)
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+spin_left();
+CloseTimer0();
+}
+if ((INTCONbits.TMR0IF ) && ((SeeLine.B) == 0b00000u))
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+set_motor_speed(left, fast, 10); 
+set_motor_speed(right, rev_fast, 0);
+   Delay10KTCYx(160);
+   Delay10KTCYx(160);
+	Delay10KTCYx(100);
+ set_motor_speed(left, medium, 10);  
+  set_motor_speed(right, medium, 0);
+}
+}
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void turn_right(void)
+{ 
+OpenTimer0(TIMER_INT_OFF & T0_16BIT & T0_SOURCE_INT & T0_PS_1_256);
+WriteTimer0(30000);
+INTCONbits.TMR0IF= 0;
+while ((!INTCONbits.TMR0IF) && (((SeeLine.B) == 0b10100) || ((SeeLine.B) == 0b01100) || ((SeeLine.B) == 0b11100) || ((SeeLine.B) == 0b01110) || ((SeeLine.B) == 0b00110) || ((SeeLine.B) == 0b00101) || ((SeeLine.B) == 0b00100) )) 
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+set_motor_speed(left, medium, 10);  
+  set_motor_speed(right, medium, 0);
+}
+
+while ( (INTCONbits.TMR0IF) || (((SeeLine.B) == 0b00000)))
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+ set_motor_speed(left, medium, 10);  
+  set_motor_speed(right, rev_medium, 0);
+	if ((SeeLine.B) == 0b00100)
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+straight_fwd();
+CloseTimer0();
+}
+}
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+void spin_left(void) 
+{ 
+OpenTimer0(TIMER_INT_OFF & T0_16BIT & T0_SOURCE_INT & T0_PS_1_128);
+WriteTimer0(60335);
+INTCONbits.TMR0IF = 0;
+//While this statements are true then the robot will either continue forward or it will start turning
+while (  (!INTCONbits.TMR0IF ) && ( ( (SeeLine.B ) == 0b00111u) || ((SeeLine.B ) == 0b01111u) || ((SeeLine.B ) == 0b00011u) || ((SeeLine.B ) == 0b00010u) || ((SeeLine.B ) == 0b00110u) || ((SeeLine.B) == 0b00101u) || ((SeeLine.B) == 0b00110u) ) || ((SeeLine.B ) == 0b11100u) || ((SeeLine.B ) == 0b11000u) || ((SeeLine.B ) == 0b01100u) || ((SeeLine.B ) == 0b00000u) || ((SeeLine.B ) == 0b01110u) || ((SeeLine.B ) == 0b11100u) || ((SeeLine.B ) == 0b11000u) || ((SeeLine.B ) == 0b111111u) ) 
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+if ( (SeeLine.B ) == 0b00111u)
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+  set_motor_speed(right, rev_fast, 0);  
+  set_motor_speed(left, fast, 0);  
+}
+
+else if ((SeeLine.B) == 0b11111)
+{
+straight_fwd();
+}
+else
+
+check_sensors();    // from sumovore.c
+        set_leds();
+ set_motor_speed(right, rev_medium, 10);  
+  set_motor_speed(left, medium, 0);  
+}
+
+
+//If the flag is reached and there is a parallel line then the robot will go straight
+ if ((INTCONbits.TMR0IF ) || ((SeeLine.B) == 0b00100u) )
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+straight_fwd();
+	CloseTimer0();
+}
+else if ( (INTCONbits.TMR0IF) || (((SeeLine.B) == 0b00000)))
+{
+	while  (( SeeLine.b.Center ) !=1)
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+ set_motor_speed(left, rev_fast, 10);  
+  set_motor_speed(right, fast, 0);
+CloseTimer0();
+}
+
+if  ((SeeLine.B)  == 0b00100)
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+straight_fwd();
+CloseTimer0();
+}
+}
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ 
+void turn_left(void) 
+{ 
+OpenTimer0(TIMER_INT_OFF & T0_16BIT & T0_SOURCE_INT & T0_PS_1_256);
+WriteTimer0(30000);
+INTCONbits.TMR0IF= 0;
+while ((!INTCONbits.TMR0IF) && (((SeeLine.B) == 0b10100) || ((SeeLine.B) == 0b11111) || ((SeeLine.B) == 0b01100) || ((SeeLine.B) == 0b11100) || ((SeeLine.B) == 0b01110) || ((SeeLine.B) == 0b00110) || ((SeeLine.B) == 0b00101) || ((SeeLine.B) == 0b00100) || ((SeeLine.B) == 0b11000) || ((SeeLine.B) == 0b00111) ))
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+set_motor_speed(left, medium, 10);  
+  set_motor_speed(right, medium, 0);
+if ((SeeLine.B) == 0b11111)
+{
+straight_fwd();
+}
+}
+
+while ( (INTCONbits.TMR0IF) || (((SeeLine.B) == 0b00000)))
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+ set_motor_speed(left, rev_medium, 10);  
+  set_motor_speed(right, medium, 0);
+	if ((SeeLine.B) == 0b00100)
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+straight_fwd();
+CloseTimer0();
+}
+}
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//My logic for this sections is that if the robot sees the center line or is fully lit up then this function will occur
+//When the function is called a timer is started and if the flag is not reached and the the all of the follwing are happening the robot will continue forward
+//IF the the flag is reached and the all the sensors are lit up then the robot will stop
+
+void straight_fwd(void) 
+{ 
+OpenTimer0(TIMER_INT_OFF & T0_16BIT & T0_SOURCE_INT & T0_PS_1_128);
+WriteTimer0(45306);
+INTCONbits.TMR0IF= 0;
+while ((!INTCONbits.TMR0IF) && ((SeeLine.B ) == 0b01110u) || ((SeeLine.B ) == 0b01111u) || ((SeeLine.B ) == 0b00100u) || ((SeeLine.B) == 0b11110) || ((SeeLine.B) == 0b11000) || ((SeeLine.B) == 0b00011) || ((SeeLine.B) == 0b10001))
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+if (((SeeLine.B ) == 0b01110u) || ((SeeLine.B ) == 0b01111u) || ((SeeLine.B ) == 0b00100u))
+{ 
+check_sensors();    // from sumovore.c
+        set_leds();
+ set_motor_speed(left, medium, 10);  
+  set_motor_speed(right, medium, 0);
+}
+}
+if ( (INTCONbits.TMR0IF) && ((SeeLine.B) == 0b11111u)) 
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+ motors_brake_all();
+CloseTimer0();
+}
+} 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+void spin_right(void) 
+{ 
+OpenTimer0(TIMER_INT_OFF & T0_16BIT & T0_SOURCE_INT & T0_PS_1_128);
+WriteTimer0(4500);
+INTCONbits.TMR0IF = 0;
+//While this statements are true then the robot will either continue forward or it will start turning
+while ((!INTCONbits.TMR0IF ) && (((SeeLine.B) == 0b01100u) || ((SeeLine.B ) == 0b11100u) || ((SeeLine.B ) == 0b11110u) || ((SeeLine.B ) == 0b11000u) || ((SeeLine.B ) == 0b01000u)) || ((SeeLine.B ) == 0b00111u) || ((SeeLine.B ) == 0b00110u) || ((SeeLine.B ) == 0b00011u))
+{
+if ((SeeLine.B ) == 0b11100u)
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+  set_motor_speed(right, fast, 10);  
+  set_motor_speed(left, rev_fast, 0);
+}
+else
+check_sensors();    // from sumovore.c
+        set_leds();
+   set_motor_speed(right, medium, 10);  
+  set_motor_speed(left, rev_medium, 0);
+
+}
+ if ((INTCONbits.TMR0IF ) && (( SeeLine.b.Center ) !=1) )
+{
+	while  (( SeeLine.b.Center ) !=1)
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+ set_motor_speed(left, fast, 10);  
+  set_motor_speed(right, rev_fast, 0);
+CloseTimer0();
+}
+
+if  ((SeeLine.B)  == 0b00100)
+{
+check_sensors();    // from sumovore.c
+        set_leds();
+straight_fwd();
+CloseTimer0();
+} 
+}
+
+}
